@@ -902,7 +902,7 @@ export default function Home() {
                           onChange={(e) =>
                             setNewItem({ ...newItem, name: e.target.value })
                           }
-                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="Item name"
                         />
                       </td>
@@ -913,7 +913,7 @@ export default function Home() {
                           onChange={(e) =>
                             setNewItem({ ...newItem, sku: e.target.value })
                           }
-                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="SKU"
                         />
                       </td>
@@ -928,7 +928,7 @@ export default function Home() {
                               currentStock: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="0"
                         />
                       </td>
@@ -943,7 +943,7 @@ export default function Home() {
                               reorderLevel: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="0"
                         />
                       </td>
@@ -958,7 +958,7 @@ export default function Home() {
                               price: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="0"
                         />
                       </td>
@@ -969,7 +969,7 @@ export default function Home() {
                           onChange={(e) =>
                             setNewItem({ ...newItem, category: e.target.value })
                           }
-                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="Category"
                         />
                       </td>
@@ -1036,7 +1036,7 @@ export default function Home() {
                                   name: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1049,7 +1049,7 @@ export default function Home() {
                                   sku: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1063,7 +1063,7 @@ export default function Home() {
                                   currentStock: parseInt(e.target.value) || 0,
                                 })
                               }
-                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1077,7 +1077,7 @@ export default function Home() {
                                   reorderLevel: parseInt(e.target.value) || 0,
                                 })
                               }
-                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1091,7 +1091,7 @@ export default function Home() {
                                   price: parseInt(e.target.value) || 0,
                                 })
                               }
-                              className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1104,7 +1104,7 @@ export default function Home() {
                                   category: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
