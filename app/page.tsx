@@ -1,7 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Mic, MicOff, Bell, Settings, FileText, Plus, Edit2, Trash2, TrendingUp, AlertCircle, DollarSign, Package, X, Save, Download, Calendar } from 'lucide-react';
+import { useState } from "react";
+import {
+  Mic,
+  MicOff,
+  Bell,
+  Settings,
+  FileText,
+  Plus,
+  Edit2,
+  Trash2,
+  TrendingUp,
+  AlertCircle,
+  DollarSign,
+  Package,
+  X,
+  Save,
+  Download,
+  Calendar,
+} from "lucide-react";
 
 interface InventoryItem {
   id: string;
@@ -11,50 +28,133 @@ interface InventoryItem {
   reorderLevel: number;
   price: number;
   category: string;
-  status: 'Low' | 'Stocked';
+  status: "Low" | "Stocked";
 }
 
 interface VoiceCommandLog {
   timestamp: string;
   command: string;
-  status: 'Success';
+  status: "Success";
+}
+
+// Add: stock change entry interface
+interface StockChangeEntry {
+  timestamp: string;
+  itemId: string;
+  itemName: string;
+  changeType: "Added" | "Updated" | "Deleted";
+  previousStock: number;
+  newStock: number;
+  note?: string;
 }
 
 export default function Home() {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('Update stock of Organic Basmati Rice to 85');
-  const [assistantResponse, setAssistantResponse] = useState('Stock updated to 85 units');
+  const [transcript, setTranscript] = useState(
+    "Update stock of Organic Basmati Rice to 85"
+  );
+  const [assistantResponse, setAssistantResponse] = useState(
+    "Stock updated to 85 units"
+  );
   const [showAddModal, setShowAddModal] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
-    { id: '1', name: 'Tata Tea Gold', sku: 'TEA-002', currentStock: 35, reorderLevel: 40, price: 250, category: 'Beverages', status: 'Low' },
-    { id: '2', name: 'Britannia Biscuits', sku: 'BISC-003', currentStock: 120, reorderLevel: 60, price: 30, category: 'Snacks', status: 'Stocked' },
-    { id: '3', name: 'Amul Fresh Milk', sku: 'MILK-004', currentStock: 25, reorderLevel: 30, price: 56, category: 'Dairy', status: 'Low' },
-    { id: '4', name: 'Surf Excel Detergent', sku: 'DET-005', currentStock: 45, reorderLevel: 25, price: 180, category: 'Cleaning', status: 'Stocked' },
-    { id: '5', name: 'Fortune Sunflower Oil', sku: 'OIL-006', currentStock: 15, reorderLevel: 20, price: 210, category: 'Cooking', status: 'Low' },
+    {
+      id: "1",
+      name: "Tata Tea Gold",
+      sku: "TEA-002",
+      currentStock: 35,
+      reorderLevel: 40,
+      price: 250,
+      category: "Beverages",
+      status: "Low",
+    },
+    {
+      id: "2",
+      name: "Britannia Biscuits",
+      sku: "BISC-003",
+      currentStock: 120,
+      reorderLevel: 60,
+      price: 30,
+      category: "Snacks",
+      status: "Stocked",
+    },
+    {
+      id: "3",
+      name: "Amul Fresh Milk",
+      sku: "MILK-004",
+      currentStock: 25,
+      reorderLevel: 30,
+      price: 56,
+      category: "Dairy",
+      status: "Low",
+    },
+    {
+      id: "4",
+      name: "Surf Excel Detergent",
+      sku: "DET-005",
+      currentStock: 45,
+      reorderLevel: 25,
+      price: 180,
+      category: "Cleaning",
+      status: "Stocked",
+    },
+    {
+      id: "5",
+      name: "Fortune Sunflower Oil",
+      sku: "OIL-006",
+      currentStock: 15,
+      reorderLevel: 20,
+      price: 210,
+      category: "Cooking",
+      status: "Low",
+    },
   ]);
 
   const [editForm, setEditForm] = useState<InventoryItem | null>(null);
 
   const [newItem, setNewItem] = useState<InventoryItem>({
-    id: '',
-    name: '',
-    sku: '',
+    id: "",
+    name: "",
+    sku: "",
     currentStock: 0,
     reorderLevel: 0,
     price: 0,
-    category: '',
-    status: 'Stocked'
+    category: "",
+    status: "Stocked",
   });
 
+  const [stockChangeHistory, setStockChangeHistory] = useState<
+    StockChangeEntry[]
+  >([]);
+  const [activeReportTab, setActiveReportTab] = useState<"voice" | "stock">(
+    "voice"
+  );
+
   const voiceCommandLogs: VoiceCommandLog[] = [
-    { timestamp: '2025-11-14 10:30 AM', command: 'Update stock of Organic Basmati Rice to 85', status: 'Success' },
-    { timestamp: '2025-11-14 10:15 AM', command: 'Show items running low', status: 'Success' },
-    { timestamp: '2025-11-14 09:45 AM', command: 'What is total inventory value', status: 'Success' },
-    { timestamp: '2025-11-14 09:20 AM', command: 'Add new item Maggi Noodles', status: 'Success' },
+    {
+      timestamp: "2025-11-14 10:30 AM",
+      command: "Update stock of Organic Basmati Rice to 85",
+      status: "Success",
+    },
+    {
+      timestamp: "2025-11-14 10:15 AM",
+      command: "Show items running low",
+      status: "Success",
+    },
+    {
+      timestamp: "2025-11-14 09:45 AM",
+      command: "What is total inventory value",
+      status: "Success",
+    },
+    {
+      timestamp: "2025-11-14 09:20 AM",
+      command: "Add new item Maggi Noodles",
+      status: "Success",
+    },
   ];
 
   const toggleListening = () => {
@@ -62,18 +162,36 @@ export default function Home() {
   };
 
   const handleAddItem = () => {
+    if (!newItem.name || !newItem.sku || !newItem.category) {
+      alert("Please fill in all fields");
+      return;
+    }
     const id = (inventoryItems.length + 1).toString();
-    const status: 'Low' | 'Stocked' = newItem.currentStock <= newItem.reorderLevel ? 'Low' : 'Stocked';
-    setInventoryItems([...inventoryItems, { ...newItem, id, status }]);
+    const status: "Low" | "Stocked" =
+      newItem.currentStock <= newItem.reorderLevel ? "Low" : "Stocked";
+    const addedItem = { ...newItem, id, status };
+    setInventoryItems([...inventoryItems, addedItem]);
+    // record history
+    setStockChangeHistory((prev) => [
+      {
+        timestamp: new Date().toLocaleString(),
+        itemId: id,
+        itemName: newItem.name,
+        changeType: "Added",
+        previousStock: 0,
+        newStock: newItem.currentStock,
+      },
+      ...prev,
+    ]);
     setNewItem({
-      id: '',
-      name: '',
-      sku: '',
+      id: "",
+      name: "",
+      sku: "",
       currentStock: 0,
       reorderLevel: 0,
       price: 0,
-      category: '',
-      status: 'Stocked'
+      category: "",
+      status: "Stocked",
     });
     setShowAddModal(false);
   };
@@ -85,26 +203,59 @@ export default function Home() {
 
   const handleSaveEdit = () => {
     if (editForm) {
-      const status: 'Low' | 'Stocked' = editForm.currentStock <= editForm.reorderLevel ? 'Low' : 'Stocked';
-      setInventoryItems(inventoryItems.map(item => 
-        item.id === editForm.id ? { ...editForm, status } : item
-      ));
+      if (!editForm.name || !editForm.sku || !editForm.category) {
+        alert("Please fill in all fields");
+        return;
+      }
+      const prevStock =
+        inventoryItems.find((i) => i.id === editForm.id)?.currentStock ?? 0;
+      const status: "Low" | "Stocked" =
+        editForm.currentStock <= editForm.reorderLevel ? "Low" : "Stocked";
+      setInventoryItems(
+        inventoryItems.map((item) =>
+          item.id === editForm.id ? { ...editForm, status } : item
+        )
+      );
+      // record update history (only if any significant change; here always record)
+      setStockChangeHistory((prev) => [
+        {
+          timestamp: new Date().toLocaleString(),
+          itemId: editForm.id,
+          itemName: editForm.name,
+          changeType: "Updated",
+          previousStock: prevStock,
+          newStock: editForm.currentStock,
+        },
+        ...prev,
+      ]);
       setEditingId(null);
       setEditForm(null);
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditForm(null);
+  const handleDelete = (id: string) => {
+    const itemToDelete = inventoryItems.find((item) => item.id === id);
+    if (itemToDelete) {
+      setStockChangeHistory((prev) => [
+        {
+          timestamp: new Date().toLocaleString(),
+          itemId: itemToDelete.id,
+          itemName: itemToDelete.name,
+          changeType: "Deleted",
+          previousStock: itemToDelete.currentStock,
+          newStock: 0,
+        },
+        ...prev,
+      ]);
+    }
+    setInventoryItems(inventoryItems.filter((item) => item.id !== id));
+    setDeletingId(null);
   };
 
-  const handleDelete = (id: string) => {
-    setDeletingId(id);
-    setTimeout(() => {
-      setInventoryItems(inventoryItems.filter(item => item.id !== id));
-      setDeletingId(null);
-    }, 300);
+  const handleConfirmDelete = () => {
+    if (deletingId) {
+      handleDelete(deletingId);
+    }
   };
 
   if (showReports) {
@@ -118,32 +269,29 @@ export default function Home() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">Sharma General Store</h1>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  Sharma General Store
+                </h1>
                 <p className="text-sm text-gray-500">Owner: Rajesh Sharma</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
-              <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-                <option>🇬🇧 English</option>
-                <option>🇮🇳 Hindi</option>
-              </select>
-              
-              <button 
+              <button
                 onClick={() => setShowReports(false)}
                 className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
               >
                 <FileText className="w-5 h-5" />
                 <span className="text-sm font-medium">Back to Dashboard</span>
               </button>
-              
+
               <button className="relative p-2 hover:bg-gray-100 rounded-lg">
                 <Bell className="w-5 h-5 text-gray-700" />
                 <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   3
                 </span>
               </button>
-              
+
               <button className="p-2 hover:bg-gray-100 rounded-lg">
                 <Settings className="w-5 h-5 text-gray-700" />
               </button>
@@ -155,16 +303,18 @@ export default function Home() {
           {/* Voice Commands Panel */}
           <div className="w-80 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Voice Commands</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Voice Commands
+              </h2>
               <p className="text-sm text-gray-600 mb-6">Press and speak</p>
-              
+
               <div className="flex flex-col items-center mb-6">
                 <button
                   onClick={toggleListening}
                   className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-                    isListening 
-                      ? 'bg-blue-100 hover:bg-blue-200' 
-                      : 'bg-gray-700 hover:bg-gray-800'
+                    isListening
+                      ? "bg-blue-100 hover:bg-blue-200"
+                      : "bg-gray-700 hover:bg-gray-800"
                   }`}
                 >
                   {isListening ? (
@@ -174,7 +324,7 @@ export default function Home() {
                   )}
                 </button>
                 <p className="mt-4 text-sm text-gray-600">
-                  {isListening ? 'Listening...' : 'Ready to listen'}
+                  {isListening ? "Listening..." : "Ready to listen"}
                 </p>
               </div>
 
@@ -188,14 +338,22 @@ export default function Home() {
                   <div className="bg-blue-50 rounded-lg p-4 flex gap-2">
                     <div className="flex-shrink-0">
                       <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/>
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
                         </svg>
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-blue-600 font-medium mb-1">Assistant Response:</p>
-                      <p className="text-sm text-gray-900">{assistantResponse}</p>
+                      <p className="text-xs text-blue-600 font-medium mb-1">
+                        Assistant Response:
+                      </p>
+                      <p className="text-sm text-gray-900">
+                        {assistantResponse}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -205,12 +363,15 @@ export default function Home() {
                 <p className="text-xs text-gray-500 mb-3">Try saying:</p>
                 <div className="space-y-2">
                   {[
-                    'Update stock of [item] to [number]',
-                    'Show items running low',
-                    'What is total inventory value?',
-                    'Add new item [name]'
+                    "Update stock of [item] to [number]",
+                    "Show items running low",
+                    "What is total inventory value?",
+                    "Add new item [name]",
                   ].map((command, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700">
+                    <div
+                      key={index}
+                      className="bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700"
+                    >
                       "{command}"
                     </div>
                   ))}
@@ -232,7 +393,9 @@ export default function Home() {
                     +12.5%
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Total Inventory Value</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  Total Inventory Value
+                </p>
                 <p className="text-2xl font-bold text-gray-900">₹16,250</p>
               </div>
 
@@ -272,20 +435,26 @@ export default function Home() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mb-1">Top Selling Item</p>
-                <p className="text-lg font-semibold text-gray-900">Britannia Biscuits</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  Britannia Biscuits
+                </p>
               </div>
             </div>
 
             {/* Generate Reports Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Generate Reports</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                Generate Reports
+              </h2>
+
               <div className="grid grid-cols-3 gap-4">
                 <button className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-6 h-6 text-blue-600" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Daily Report (PDF)</h3>
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">
+                    Daily Report (PDF)
+                  </h3>
                   <p className="text-sm text-gray-600">Last 24 hours</p>
                 </button>
 
@@ -293,7 +462,9 @@ export default function Home() {
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                     <Calendar className="w-6 h-6 text-green-600" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Weekly Report (Excel)</h3>
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">
+                    Weekly Report (Excel)
+                  </h3>
                   <p className="text-sm text-gray-600">Last 7 days</p>
                 </button>
 
@@ -301,7 +472,9 @@ export default function Home() {
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                     <Download className="w-6 h-6 text-purple-600" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Custom Range</h3>
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">
+                    Custom Range
+                  </h3>
                   <p className="text-sm text-gray-600">Select dates</p>
                 </button>
               </div>
@@ -311,57 +484,170 @@ export default function Home() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="border-b border-gray-200 px-6">
                 <div className="flex gap-6">
-                  <button className="px-1 py-4 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                  <button
+                    onClick={() => setActiveReportTab("voice")}
+                    className={`px-1 py-4 text-sm font-medium ${
+                      activeReportTab === "voice"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
                     Voice Command Logs
                   </button>
-                  <button className="px-1 py-4 text-sm font-medium text-gray-600 hover:text-gray-900">
+                  <button
+                    onClick={() => setActiveReportTab("stock")}
+                    className={`px-1 py-4 text-sm font-medium ${
+                      activeReportTab === "stock"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
                     Stock Change History
                   </button>
                 </div>
               </div>
 
               <div className="p-6">
-                <h3 className="text-base font-semibold text-gray-900 mb-2">Voice Command Activity</h3>
-                <p className="text-sm text-gray-600 mb-6">All commands processed by the voice assistant</p>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Timestamp
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Command
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {voiceCommandLogs.map((log, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {log.timestamp}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 flex items-center gap-2">
-                            <Mic className="w-4 h-4 text-gray-400" />
-                            {log.command}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                              </svg>
-                              Success
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                {activeReportTab === "voice" ? (
+                  <>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">
+                      Voice Command Activity
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      All commands processed by the voice assistant
+                    </p>
+                    <div className="overflow-x-auto">
+                      {/* ...existing voice command table code (unchanged) ... */}
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Timestamp
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Command
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {voiceCommandLogs.map((log, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {log.timestamp}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900 flex items-center gap-2">
+                                <Mic className="w-4 h-4 text-gray-400" />
+                                {log.command}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Success
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">
+                      Stock Change History
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Chronological record of stock additions, updates and
+                      deletions
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Timestamp
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Item
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Type
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Previous
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              New
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              Note
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {stockChangeHistory.map((h, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {h.timestamp}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {h.itemName}{" "}
+                                <span className="text-xs text-gray-500 ml-2">
+                                  ({h.itemId})
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm">
+                                <span
+                                  className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                                    h.changeType === "Added"
+                                      ? "bg-green-100 text-green-800"
+                                      : h.changeType === "Deleted"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}
+                                >
+                                  {h.changeType}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {h.previousStock}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {h.newStock}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-600">
+                                {h.note ?? "-"}
+                              </td>
+                            </tr>
+                          ))}
+                          {stockChangeHistory.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={6}
+                                className="px-6 py-4 text-center text-sm text-gray-500"
+                              >
+                                No stock changes recorded.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -380,32 +666,29 @@ export default function Home() {
               <Package className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Sharma General Store</h1>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Sharma General Store
+              </h1>
               <p className="text-sm text-gray-500">Owner: Rajesh Sharma</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-              <option>🇬🇧 English</option>
-              <option>🇮🇳 Hindi</option>
-            </select>
-            
-            <button 
+            <button
               onClick={() => setShowReports(true)}
               className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
             >
               <FileText className="w-5 h-5" />
               <span className="text-sm font-medium">Reports</span>
             </button>
-            
+
             <button className="relative p-2 hover:bg-gray-100 rounded-lg">
               <Bell className="w-5 h-5 text-gray-700" />
               <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                 3
               </span>
             </button>
-            
+
             <button className="p-2 hover:bg-gray-100 rounded-lg">
               <Settings className="w-5 h-5 text-gray-700" />
             </button>
@@ -417,16 +700,18 @@ export default function Home() {
         {/* Voice Commands Panel */}
         <div className="w-80 flex-shrink-0">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Voice Commands</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Voice Commands
+            </h2>
             <p className="text-sm text-gray-600 mb-6">Press and speak</p>
-            
+
             <div className="flex flex-col items-center mb-6">
               <button
                 onClick={toggleListening}
                 className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-                  isListening 
-                    ? 'bg-blue-100 hover:bg-blue-200' 
-                    : 'bg-gray-700 hover:bg-gray-800'
+                  isListening
+                    ? "bg-blue-100 hover:bg-blue-200"
+                    : "bg-gray-700 hover:bg-gray-800"
                 }`}
               >
                 {isListening ? (
@@ -436,7 +721,7 @@ export default function Home() {
                 )}
               </button>
               <p className="mt-4 text-sm text-gray-600">
-                {isListening ? 'Listening...' : 'Ready to listen'}
+                {isListening ? "Listening..." : "Ready to listen"}
               </p>
             </div>
 
@@ -450,13 +735,19 @@ export default function Home() {
                 <div className="bg-blue-50 rounded-lg p-4 flex gap-2">
                   <div className="flex-shrink-0">
                     <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/>
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
                       </svg>
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-blue-600 font-medium mb-1">Assistant Response:</p>
+                    <p className="text-xs text-blue-600 font-medium mb-1">
+                      Assistant Response:
+                    </p>
                     <p className="text-sm text-gray-900">{assistantResponse}</p>
                   </div>
                 </div>
@@ -467,12 +758,15 @@ export default function Home() {
               <p className="text-xs text-gray-500 mb-3">Try saying:</p>
               <div className="space-y-2">
                 {[
-                  'Update stock of [item] to [number]',
-                  'Show items running low',
-                  'What is total inventory value?',
-                  'Add new item [name]'
+                  "Update stock of [item] to [number]",
+                  "Show items running low",
+                  "What is total inventory value?",
+                  "Add new item [name]",
                 ].map((command, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700">
+                  <div
+                    key={index}
+                    className="bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700"
+                  >
                     "{command}"
                   </div>
                 ))}
@@ -481,7 +775,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Reports Content */}
         <div className="flex-1">
           {/* Stats Cards */}
           <div className="grid grid-cols-4 gap-4 mb-6">
@@ -494,7 +788,9 @@ export default function Home() {
                   +12.5%
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mb-1">Total Inventory Value</p>
+              <p className="text-sm text-gray-600 mb-1">
+                Total Inventory Value
+              </p>
               <p className="text-2xl font-bold text-gray-900">₹25,000</p>
             </div>
 
@@ -534,7 +830,9 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-sm text-gray-600 mb-1">Top Selling Item</p>
-              <p className="text-lg font-semibold text-gray-900">Britannia Biscuits</p>
+              <p className="text-lg font-semibold text-gray-900">
+                Britannia Biscuits
+              </p>
             </div>
           </div>
 
@@ -542,10 +840,14 @@ export default function Home() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Inventory Management</h2>
-                <p className="text-sm text-gray-600 mt-1">{inventoryItems.length} items in stock</p>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Inventory Management
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {inventoryItems.length} items in stock
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAddModal(true)}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -585,51 +887,317 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {inventoryItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
+                  {/* Inline add row (renders at top when showAddModal === true) */}
+                  {showAddModal && (
+                    <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gray-900">{item.name}</span>
+                        <input
+                          value={newItem.name}
+                          onChange={(e) =>
+                            setNewItem({ ...newItem, name: e.target.value })
+                          }
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          placeholder="Item name"
+                        />
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-yellow-700 bg-yellow-50 px-2 py-1 rounded">
-                          {item.sku}
+                        <input
+                          value={newItem.sku}
+                          onChange={(e) =>
+                            setNewItem({ ...newItem, sku: e.target.value })
+                          }
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          placeholder="SKU"
+                        />
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="number"
+                          value={newItem.currentStock}
+                          onChange={(e) =>
+                            setNewItem({
+                              ...newItem,
+                              currentStock: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          placeholder="0"
+                        />
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="number"
+                          value={newItem.reorderLevel}
+                          onChange={(e) =>
+                            setNewItem({
+                              ...newItem,
+                              reorderLevel: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          placeholder="0"
+                        />
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="number"
+                          value={newItem.price}
+                          onChange={(e) =>
+                            setNewItem({
+                              ...newItem,
+                              price: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          placeholder="0"
+                        />
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          value={newItem.category}
+                          onChange={(e) =>
+                            setNewItem({ ...newItem, category: e.target.value })
+                          }
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          placeholder="Category"
+                        />
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {/* status preview */}
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${
+                            newItem.currentStock <= newItem.reorderLevel
+                              ? "text-yellow-700 bg-yellow-100"
+                              : "text-blue-700 bg-blue-100"
+                          }`}
+                        >
+                          {newItem.currentStock <= newItem.reorderLevel
+                            ? "Low"
+                            : "Stocked"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{item.currentStock}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{item.reorderLevel}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">₹{item.price}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">{item.category}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.status === 'Low' ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-100 px-3 py-1 rounded-full">
-                            <AlertCircle className="w-3 h-3" />
-                            Low
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
-                            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                            Stocked
-                          </span>
-                        )}
-                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <button className="p-1.5 text-gray-600 hover:bg-gray-100 rounded">
-                            <Edit2 className="w-4 h-4" />
+                          <button
+                            onClick={handleAddItem}
+                            className="p-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center"
+                            title="Save"
+                          >
+                            <Save className="w-4 h-4" />
                           </button>
-                          <button className="p-1.5 text-red-600 hover:bg-red-50 rounded">
-                            <Trash2 className="w-4 h-4" />
+                          <button
+                            onClick={() => {
+                              setShowAddModal(false);
+                              setNewItem({
+                                id: "",
+                                name: "",
+                                sku: "",
+                                currentStock: 0,
+                                reorderLevel: 0,
+                                price: 0,
+                                category: "",
+                                status: "Stocked",
+                              });
+                            }}
+                            className="p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 flex items-center justify-center"
+                            title="Cancel"
+                          >
+                            <X className="w-4 h-4 text-gray-600" />
                           </button>
                         </div>
                       </td>
+                    </tr>
+                  )}
+
+                  {/* Inventory rows with inline edit when item.id === editingId */}
+                  {inventoryItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      {editingId === item.id && editForm ? (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              value={editForm.name}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  name: e.target.value,
+                                })
+                              }
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                            />
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              value={editForm.sku}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  sku: e.target.value,
+                                })
+                              }
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                            />
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="number"
+                              value={editForm.currentStock}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  currentStock: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                            />
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="number"
+                              value={editForm.reorderLevel}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  reorderLevel: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                            />
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="number"
+                              value={editForm.price}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  price: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                            />
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              value={editForm.category}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  category: e.target.value,
+                                })
+                              }
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                            />
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${
+                                editForm.currentStock <= editForm.reorderLevel
+                                  ? "text-yellow-700 bg-yellow-100"
+                                  : "text-blue-700 bg-blue-100"
+                              }`}
+                            >
+                              {editForm.currentStock <= editForm.reorderLevel
+                                ? "Low"
+                                : "Stocked"}
+                            </span>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleSaveEdit}
+                                className="p-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center"
+                                title="Save"
+                              >
+                                <Save className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 flex items-center justify-center"
+                                title="Cancel"
+                              >
+                                <X className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm font-medium text-gray-900">
+                              {item.name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-yellow-700 bg-yellow-50 px-2 py-1 rounded">
+                              {item.sku}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">
+                              {item.currentStock}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">
+                              {item.reorderLevel}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">
+                              ₹{item.price}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-600">
+                              {item.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {item.status === "Low" ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-100 px-3 py-1 rounded-full">
+                                <AlertCircle className="w-3 h-3" />
+                                Low
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                Stocked
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleEdit(item)}
+                                className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setDeletingId(item.id)}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -638,6 +1206,43 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+
+            <h2 className="text-lg font-semibold text-gray-900 text-center mb-2">
+              Delete Item?
+            </h2>
+            <p className="text-sm text-gray-600 text-center mb-6">
+              Are you sure you want to delete this item? This action cannot be
+              undone.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingId(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
