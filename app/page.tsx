@@ -216,7 +216,6 @@ export default function Home() {
           item.id === editForm.id ? { ...editForm, status } : item
         )
       );
-      // record update history (only if any significant change; here always record)
       setStockChangeHistory((prev) => [
         {
           timestamp: new Date().toLocaleString(),
@@ -231,6 +230,11 @@ export default function Home() {
       setEditingId(null);
       setEditForm(null);
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditForm(null);
   };
 
   const handleDelete = (id: string) => {
@@ -748,7 +752,9 @@ export default function Home() {
                     <p className="text-xs text-blue-600 font-medium mb-1">
                       Assistant Response:
                     </p>
-                    <p className="text-sm text-gray-900">{assistantResponse}</p>
+                    <p className="text-sm text-gray-900">
+                      {assistantResponse}
+                    </p>
                   </div>
                 </div>
               )}
