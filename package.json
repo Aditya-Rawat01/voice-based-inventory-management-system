@@ -9,8 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "agora-rtc-react": "^2.5.0",
     "agora-token": "^2.0.5",
+=======
+    "agora-rtc-sdk-ng": "^4.24.0",
+>>>>>>> 5456631ba139bea588caf13f321050a51fd925a8
     "lucide-react": "^0.460.0",
     "next": "16.0.3",
     "react": "19.2.0",

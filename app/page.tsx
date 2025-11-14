@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Mic,
   MicOff,
@@ -19,6 +19,8 @@ import {
   Download,
   Calendar,
 } from "lucide-react";
+import { useAgoraSpeechToText } from "./hooks/useAgoraSpeechToText";
+import { agoraConfig } from "../lib/agoraConfig";
 
 interface InventoryItem {
   id: string;
@@ -49,17 +51,36 @@ interface StockChangeEntry {
 }
 
 export default function Home() {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState(
-    "Update stock of Organic Basmati Rice to 85"
-  );
-  const [assistantResponse, setAssistantResponse] = useState(
-    "Stock updated to 85 units"
-  );
+  const [assistantResponse, setAssistantResponse] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Agora Speech-to-Text Hook
+  const {
+    isListening,
+    transcript,
+    partialTranscript,
+    error: speechError,
+    startListening,
+    stopListening,
+    clearTranscript,
+  } = useAgoraSpeechToText({
+    appId: agoraConfig.appId,
+    onTranscript: (finalTranscript) => {
+      // Process the final transcript for backend requests
+      processVoiceCommand(finalTranscript);
+    },
+    onPartialTranscript: (partial) => {
+      // Update UI with partial transcript in real-time
+      console.log("Partial transcript:", partial);
+    },
+    onError: (error) => {
+      console.error("Speech recognition error:", error);
+      setAssistantResponse(`Error: ${error.message}`);
+    },
+  });
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
     {
@@ -157,8 +178,104 @@ export default function Home() {
     },
   ];
 
+  // Process voice commands and make backend requests
+  const processVoiceCommand = useCallback(async (command: string) => {
+    const lowerCommand = command.toLowerCase().trim();
+    
+    // Update stock command: "Update stock of [item] to [number]"
+    const updateStockMatch = lowerCommand.match(/update stock of (.+?) to (\d+)/);
+    if (updateStockMatch) {
+      const itemName = updateStockMatch[1].trim();
+      const newStock = parseInt(updateStockMatch[2]);
+      
+      // Find item by name
+      const item = inventoryItems.find(
+        (i) => i.name.toLowerCase() === itemName.toLowerCase()
+      );
+      
+      if (item) {
+        // Update stock locally (you can replace this with API call)
+        setInventoryItems(
+          inventoryItems.map((i) =>
+            i.id === item.id
+              ? {
+                  ...i,
+                  currentStock: newStock,
+                  status: newStock <= i.reorderLevel ? "Low" : "Stocked",
+                }
+              : i
+          )
+        );
+        
+        // Record history
+        setStockChangeHistory((prev) => [
+          {
+            timestamp: new Date().toLocaleString(),
+            itemId: item.id,
+            itemName: item.name,
+            changeType: "Updated",
+            previousStock: item.currentStock,
+            newStock: newStock,
+            note: "Updated via voice command",
+          },
+          ...prev,
+        ]);
+        
+        setAssistantResponse(`Stock updated to ${newStock} units`);
+      } else {
+        setAssistantResponse(`Item "${itemName}" not found`);
+      }
+      return;
+    }
+
+    // Show low stock items
+    if (lowerCommand.includes("low") || lowerCommand.includes("running low")) {
+      const lowItems = inventoryItems.filter(
+        (item) => item.status === "Low"
+      );
+      setAssistantResponse(
+        `Found ${lowItems.length} items running low: ${lowItems
+          .map((i) => i.name)
+          .join(", ")}`
+      );
+      return;
+    }
+
+    // Total inventory value
+    if (
+      lowerCommand.includes("total") &&
+      (lowerCommand.includes("inventory") || lowerCommand.includes("value"))
+    ) {
+      const totalValue = inventoryItems.reduce(
+        (sum, item) => sum + item.currentStock * item.price,
+        0
+      );
+      setAssistantResponse(`Total inventory value is ₹${totalValue.toLocaleString()}`);
+      return;
+    }
+
+    // Add new item: "Add new item [name]"
+    const addItemMatch = lowerCommand.match(/add new item (.+)/);
+    if (addItemMatch) {
+      const itemName = addItemMatch[1].trim();
+      setAssistantResponse(`Adding "${itemName}" - Please fill in the details`);
+      setShowAddModal(true);
+      setNewItem({ ...newItem, name: itemName });
+      return;
+    }
+
+    // Default response
+    setAssistantResponse("Command processed. Please try: 'Update stock of [item] to [number]', 'Show items running low', or 'What is total inventory value?'");
+  }, [inventoryItems, setInventoryItems, setStockChangeHistory, setAssistantResponse, setShowAddModal, setNewItem, newItem]);
+
   const toggleListening = () => {
-    setIsListening(!isListening);
+    if (isListening) {
+      stopListening();
+    } else {
+      clearTranscript();
+      setAssistantResponse("");
+      startListening();
+    }
   };
 
   const handleAddItem = () => {
@@ -333,10 +450,17 @@ export default function Home() {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs text-gray-500 mb-1">Transcript:</p>
-                  <p className="text-sm text-gray-900">{transcript}</p>
-                </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500 mb-1">Transcript:</p>
+                <p className="text-sm text-gray-900">
+                  {partialTranscript || transcript || "No transcript yet..."}
+                </p>
+                {speechError && (
+                  <p className="text-xs text-red-600 mt-2">
+                    Error: {speechError.message}
+                  </p>
+                )}
+              </div>
 
                 {assistantResponse && (
                   <div className="bg-blue-50 rounded-lg p-4 flex gap-2">
@@ -732,7 +856,14 @@ export default function Home() {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-xs text-gray-500 mb-1">Transcript:</p>
-                <p className="text-sm text-gray-900">{transcript}</p>
+                <p className="text-sm text-gray-900">
+                  {partialTranscript || transcript || "No transcript yet..."}
+                </p>
+                {speechError && (
+                  <p className="text-xs text-red-600 mt-2">
+                    Error: {speechError.message}
+                  </p>
+                )}
               </div>
 
               {assistantResponse && (
@@ -902,7 +1033,7 @@ export default function Home() {
                           onChange={(e) =>
                             setNewItem({ ...newItem, name: e.target.value })
                           }
-                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="Item name"
                         />
                       </td>
@@ -913,7 +1044,7 @@ export default function Home() {
                           onChange={(e) =>
                             setNewItem({ ...newItem, sku: e.target.value })
                           }
-                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="SKU"
                         />
                       </td>
@@ -928,7 +1059,7 @@ export default function Home() {
                               currentStock: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="0"
                         />
                       </td>
@@ -943,7 +1074,7 @@ export default function Home() {
                               reorderLevel: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="0"
                         />
                       </td>
@@ -958,7 +1089,7 @@ export default function Home() {
                               price: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="0"
                         />
                       </td>
@@ -969,7 +1100,7 @@ export default function Home() {
                           onChange={(e) =>
                             setNewItem({ ...newItem, category: e.target.value })
                           }
-                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                          className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                           placeholder="Category"
                         />
                       </td>
@@ -1036,7 +1167,7 @@ export default function Home() {
                                   name: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1049,7 +1180,7 @@ export default function Home() {
                                   sku: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1063,7 +1194,7 @@ export default function Home() {
                                   currentStock: parseInt(e.target.value) || 0,
                                 })
                               }
-                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1077,7 +1208,7 @@ export default function Home() {
                                   reorderLevel: parseInt(e.target.value) || 0,
                                 })
                               }
-                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-20 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1091,7 +1222,7 @@ export default function Home() {
                                   price: parseInt(e.target.value) || 0,
                                 })
                               }
-                              className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-24 px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
@@ -1104,7 +1235,7 @@ export default function Home() {
                                   category: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200"
+                              className="w-full px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-900"
                             />
                           </td>
 
